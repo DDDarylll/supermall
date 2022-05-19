@@ -1,7 +1,15 @@
 <template>
   <div id="home">
     <nav-bar class="home-nav"><div slot="center">购物街</div></nav-bar>
-    <scroll class="content">
+
+    <scroll
+      class="content"
+      ref="scroll"
+      :probe-type="3"
+      @scroll="contentScroll"
+      :pull-up-load="true"
+      @pullingUp="loadMore"
+    >
       <home-swiper :banners="banners"></home-swiper>
       <recommend-view :recommends="recommends"></recommend-view>
       <feature-view></feature-view>
@@ -12,6 +20,9 @@
       ></tab-control>
       <goods-list :goods="showGoods"></goods-list>
     </scroll>
+
+    <!-- 监听组件根元素要用native修饰符 -->
+    <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
   </div>
 </template>
 
@@ -24,6 +35,7 @@ import NavBar from "components/common/navbar/NavBar.vue";
 import TabControl from "components/content/tabControl/TabControl.vue";
 import GoodsList from "components/content/goods/GoodsList.vue";
 import Scroll from "components/common/scroll/Scroll.vue";
+import BackTop from "components/content/backTop/BackTop.vue";
 
 import { getHomeMultidata, getHomeGoods } from "network/home";
 
@@ -37,6 +49,7 @@ export default {
     TabControl,
     GoodsList,
     Scroll,
+    BackTop,
   },
 
   data() {
@@ -49,6 +62,7 @@ export default {
         sell: { page: 0, list: [] },
       },
       currentType: "pop",
+      isShowBackTop: false,
     };
   },
 
@@ -83,7 +97,17 @@ export default {
           break;
       }
     },
+    backClick() {
+      this.$refs.scroll.scrollTo(0, 0);
+    },
+    contentScroll(position) {
+      this.isShowBackTop = -position.y > 1000;
+    },
+    loadMore() {
+      this.getHomeGoods(this.currentType);
 
+      this.$refs.scroll.scroll.refresh();
+    },
     /*
      *网络请求相关的方法
      */
@@ -98,6 +122,9 @@ export default {
       getHomeGoods(type, page).then((res) => {
         this.goods[type].list.push(...res.data.data.list);
         this.goods[type].page += 1;
+
+        //使得可以进行下一次上拉加载
+        this.$refs.scroll.finshPullUp();
       });
     },
   },
@@ -123,6 +150,7 @@ export default {
   z-index: 9;
 }
 .content {
+  /* 必须设置高度，滚动区域 */
   height: calc(100vh - 44px - 49px);
   overflow: hidden;
 }
