@@ -74,6 +74,7 @@ export default {
       isShowBackTop: false,
       tabOffsetTop: 0,
       isTabFixed: false,
+      saveY: 0,
     };
   },
 
@@ -97,6 +98,13 @@ export default {
     this.$bus.$on("itemImageLoad", () => {
       refresh();
     });
+  },
+  activated() {
+    this.$refs.scroll.scrollTo(0, this.saveY, 10);
+    this.$refs.scroll.refresh();
+  },
+  deactivated() {
+    this.saveY = this.$refs.scroll.getScrollY();
   },
   methods: {
     /*
@@ -159,9 +167,6 @@ export default {
 </script>
 
 <style scoped>
-#home {
-  /* padding-top: 44px; */
-}
 .home-nav {
   background-color: var(--color-tint);
   color: white;
